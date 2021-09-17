@@ -6,6 +6,8 @@ from apartments import apartments_predict
 from apartments_models import EstateModel, YModel
 from cars_models import CarModel
 from geo import get_distance, get_azimuth
+from houses import houses_predict
+from houses_models import HouseModel
 from сars import cars_predict
 
 app = FastAPI()
@@ -58,6 +60,20 @@ def read_car(params: CarModel):
         return {"prediction": prediction[0] * 72}
     except ZeroDivisionError:
         raise HTTPException(status_code=400, detail="Consumption rate cannot be zero")
+
+
+@app.post("/house")
+def read_car(params: HouseModel):
+    prediction = houses_predict(
+        bedrooms=params.house_bedrooms,
+        bathrooms=params.house_bathrooms,
+        living_square=params.house_area_living,
+        total_square=params.house_area_total,
+        floors=params.house_story,
+        yr_built=params.house_year_built,
+        yr_renovated=params.house_year_renovated
+    )
+    return {"prediction": prediction}
 
 
 @app.get("/y-proxy", response_model=YModel)
