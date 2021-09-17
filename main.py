@@ -1,7 +1,9 @@
+import aiohttp
+from aiohttp import ClientError
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from apartments import apartments_predict
-from apartments_models import EstateModel
+from apartments_models import EstateModel, YModel
 from cars_models import CarModel
 from geo import get_distance, get_azimuth
 from сars import cars_predict
@@ -56,3 +58,20 @@ def read_car(params: CarModel):
         return {"prediction": prediction[0] * 72}
     except ZeroDivisionError:
         raise HTTPException(status_code=400, detail="Consumption rate cannot be zero")
+
+
+@app.get("/y-proxy", response_model=YModel)
+async def get_suggestions(part: str):
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get('https://suggest-maps.yandex.com/suggest-geo', params={
+                "fullpath": 1,
+                "lang": "ru_RU",
+                "outformat": "json",
+                "v": 9,
+                "part": "Москва, " + part
+            }) as resp:
+                return await resp.json()
+        except ClientError:
+            raise HTTPException(status_code=400, detail="Problems...")
+    pass
